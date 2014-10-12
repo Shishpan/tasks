@@ -54,15 +54,12 @@ namespace Task
 		{
 			firstptr = new Unit;
 			lastptr = firstptr;
-			firstptr->nextptr = NULL;
-			firstptr->prevptr = NULL;
 			firstptr->content = val;
 			sizevalue = 1;
 		}
 		else
 		{
 			firstptr->prevptr = new Unit;
-			firstptr->prevptr->prevptr = NULL;
 			firstptr->prevptr->nextptr = firstptr;
 			firstptr = firstptr->prevptr;
 			firstptr->content = val;
@@ -75,15 +72,12 @@ namespace Task
 		{
 			firstptr = new Unit;
 			lastptr = firstptr;
-			firstptr->nextptr = NULL;
-			firstptr->prevptr = NULL;
 			firstptr->content = val;
 			sizevalue = 1;
 		}
 		else
 		{
 			lastptr->nextptr = new Unit;
-			lastptr->nextptr->nextptr = NULL;
 			lastptr->nextptr->prevptr = lastptr;
 			lastptr = lastptr->nextptr;
 			lastptr->content = val;
@@ -103,10 +97,13 @@ namespace Task
 	{
 		if (lastptr != NULL)
 		{
+			Unit* tmp = lastptr;
 			lastptr = lastptr->prevptr;
-			delete lastptr->nextptr;
+			delete tmp;
 			sizevalue--;
 		}
+		if (sizevalue == 0)
+			firstptr = NULL;
 	}
 	template <class T> typename DList<T>::Unit *
 		DList<T>::insert(Unit* u, const T& val)
@@ -168,9 +165,15 @@ namespace Task
 	template <class T> void DList<T>::clear()
 	{
 		Unit* tmpptr = firstptr;
-		while (tmpptr != NULL)
+	/*	while (tmpptr != NULL)
 		{
 			tmpptr = erase(firstptr);
+		}
+	*/
+		int j = size();
+		for (int i = 0; i < j; i++)
+		{
+			pop_back();
 		}
 	}
 	template <class T> bool DList<T>::empty()
