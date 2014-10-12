@@ -33,42 +33,37 @@ namespace Task
         //
         class Unit
         {
+			friend DList;
         public:
             // ---- This interface is part of the task ---
-            Unit *next(); // Get the next unit in list
-            Unit *prev(); // Get the previous unit in list
-            T& val();     // Get the reference to the unit's value
-        private:
-        // ---- Implementation routines ----
-        
-            
-        // ---- Data involved in the implementation ----    
-         
+			Unit();
+			~Unit();
+            Unit *next();					  // Get the next unit in list
+            Unit *prev();					  // Get the previous unit in list
+            T& val();						  // Get the reference to the unit's value
+        private:            
+			T content;
+			Unit* nextptr;
+			Unit* prevptr;
         };
-
-        // ---- Public interface of DList ----
-        DList(); //< Constructor
-        ~DList();//< Destructor
-        
+        DList();							  //< Constructor
+        ~DList();							  //< Destructor        
         void push_front (const T& val);       // Insert one unit with given value at front        
         void pop_front();                     // Remove one unit at front of the list
         void push_back (const T& val);        // Insert one unit with given value to back
         void pop_back();                      // Remove one unit from the back of the list
         Unit* insert (Unit* u, const T& val); // Insert one unit before the given one  
-
-        Unit* first(); // Get first unit
-        Unit* last();  // Get last unit
-        
-        Unit* erase (Unit* u); // Remove given unit from list, return next unit or null  
-        void clear();          // Remove all units
-        bool empty();          // Check if list is empty. Returns true if empty, false otherwise
-        unsigned size();       // Get the number of units in the list
-        void reverse();        // Reverse the order of units in the list
+        Unit* first();						  // Get first unit
+        Unit* last();						  // Get last unit
+        Unit* erase (Unit* u);				  // Remove given unit from list, return next unit or null  
+        void clear();					      // Remove all units
+        bool empty();						  // Check if list is empty. Returns true if empty, false otherwise
+        unsigned size();				      // Get the number of units in the list
+        void reverse();					      // Reverse the order of units in the list
 private:
-        // ---- The internal implementation routines ----
-        
-        // ---- The data involved in the implementation ----
-       
+		Unit* firstptr;
+		Unit* lastptr;
+		unsigned sizevalue;
     };
 
     bool uTest( UnitTest *utest_p);
