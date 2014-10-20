@@ -62,7 +62,38 @@ namespace Task
         UTEST_CHECK( utest_p, list.first()->next()->next()->val() == 30);
         
         UTEST_CHECK( utest_p, list.last()->val() == 40);
-    
+
+
+//
+		list.clear();
+		UTEST_CHECK(utest_p, list.size() == 0);
+		UTEST_CHECK(utest_p, list.empty());
+		UTEST_CHECK(utest_p, list.first() == 0);
+		UTEST_CHECK(utest_p, list.last() == 0);
+		for (int i = 0; i < 200; i++)
+		{
+			list.push_back(i);
+			list.push_front(i + 1);
+		}
+		UTEST_CHECK(utest_p, list.size() == 400);
+		UTEST_CHECK(utest_p, list.first()->val() == 200);
+		UTEST_CHECK(utest_p, list.first()->next()->val() == 199);
+		UTEST_CHECK(utest_p, list.last()->val() == 199);
+		for (int i = 0; i < 200; i++)
+		{
+			list.pop_front();
+		}
+		UTEST_CHECK(utest_p, list.size() == 200);
+		UTEST_CHECK(utest_p, list.first()->val() == 0);
+		UTEST_CHECK(utest_p, list.last()->val() == 199);
+		list.reverse();
+		UTEST_CHECK(utest_p, list.first()->val() == 199);
+		UTEST_CHECK(utest_p, list.last()->val() == 0);
+		list.erase(list.first()->next());
+		UTEST_CHECK(utest_p, list.first()->val() == 0);
+		UTEST_CHECK(utest_p, list.first()->next()->val() == 2);
+		list.clear();
+		UTEST_CHECK(utest_p, list.size() == 0);
 
         return utest_p->result();
     }
