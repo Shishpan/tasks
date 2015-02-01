@@ -5,171 +5,285 @@
 
 namespace Task {
 	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>::node_iterator 
+		typename Graph<NodeT, EdgeT>::node_iterator
 		Graph<NodeT, EdgeT>::nodes_begin()
 		{
-			return AllNodes.begin();
+			node_iterator node_iter_tmp;
+			node_iter_tmp.iter = list_of_nodes.begin();
+			return node_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
 		typename Graph<NodeT, EdgeT>::node_iterator
 		Graph<NodeT, EdgeT>::nodes_end()
 		{
-			return AllNodes.end();
-		}
-	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>::edge_iterator
-		Graph<NodeT, EdgeT>::edges_begin()
-		{
-			return AllEdges.begin();
+			node_iterator node_iter_tmp;
+			node_iter_tmp.iter = list_of_nodes.end();
+			return node_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
 		typename Graph<NodeT, EdgeT>::edge_iterator
 		Graph<NodeT, EdgeT>::edges_end()
 		{
-			return AllEdges.end();
+			edge_iterator edge_iter_tmp;
+			edge_iter_tmp.iter = list_of_edges.end();
+			return edge_iter_tmp;
+		}
+	template < class NodeT, class EdgeT>
+		typename Graph<NodeT, EdgeT>::edge_iterator
+		Graph<NodeT, EdgeT>::edges_begin()
+		{
+			edge_iterator edge_iter_tmp;
+			edge_iter_tmp.iter = list_of_edges.begin();
+			return edge_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
 		UInt32 Graph<NodeT, EdgeT>::num_nodes() const
 		{
-			return node_counter;
+			return nodes_amount;
 		}
 	template < class NodeT, class EdgeT>
 		UInt32 Graph<NodeT, EdgeT>::num_edges() const
 		{
-			return edge_counter;
+			return edges_amount;
+		}
+	template < class NodeT, class EdgeT> Graph<NodeT, EdgeT>::Node::Node(Graph& g) : 
+		ref_to_graph(g),
+		uniq_num(g.counter)
+		{
+			g.counter++;
+			g.nodes_amount++;
 		}
 	template < class NodeT, class EdgeT>
-		NodeT& Graph<NodeT, EdgeT>::create_node()
+		typename NodeT& Graph<NodeT, EdgeT>::create_node()
 		{
-			NodeT* tmpnode = static_cast<NodeT*>(new NodeT(*this));
-			NodeT link = *((AllNodes.insert(*tmpnode)).first);
-			delete tmpnode;
-			return link;
+			NodeT* node_tmp_ptr = new NodeT(ref_to_graph);
+			list_of_nodes.push_front(*node_tmp_ptr);
+			list_of_nodes.begin()->get().iter_of_itself_in_general_list = list_of_nodes.begin();
+			return *(nodes_begin());
 		}
 	template < class NodeT, class EdgeT>
-		EdgeT& Graph<NodeT, EdgeT>::create_edge( NodeT& pred, NodeT& succ)
+		typename EdgeT& Graph<NodeT, EdgeT>::create_edge(NodeT& pred, NodeT& succ)
 		{
-			EdgeT* tmpedge = static_cast<EdgeT*>(new EdgeT(pred, succ));
-			EdgeT link = *((AllEdges.insert(*tmpedge)).first);
-			delete tmpedge;
-			return link;
+			EdgeT* edge_tmp_ptr = new EdgeT(pred, succ);
+			list_of_edges.push_front(*edge_tmp_ptr);
+
+			pred.list_of_refs_to_succs.push_front(succ);
+			list_of_edges.begin()->get().iter_of_ref_to_succ_in_pred = pred.list_of_refs_to_succs.begin();
+			pred.list_of_refs_to_succs_edges.push_front(*(list_of_edges.begin()));
+			list_of_edges.begin()->get().iter_of_ref_to_edge_in_pred = pred.list_of_refs_to_succs_edges.begin();
+
+			succ.list_of_refs_to_preds.push_front(pred);
+			list_of_edges.begin()->get().iter_of_ref_to_pred_in_succ = succ.list_of_refs_to_preds.begin();
+			succ.list_of_refs_to_preds_edges.push_front(*(list_of_edges.begin()));
+			list_of_edges.begin()->get().iter_of_ref_to_edge_in_succ = succ.list_of_refs_to_preds_edges.begin();
+
+			list_of_edges.begin()->get().iter_of_itself_in_general_list = list_of_edges.begin();
+			return list_of_edges.begin()->get();
 		}
+	template <class NodeT, class EdgeT>
+		typename Graph<NodeT, EdgeT>::UId
+		Graph<NodeT, EdgeT> ::Node::uid() const
+		{
+			return uniq_num;
+		}
+
 	template < class NodeT, class EdgeT>
-		void Graph<NodeT, EdgeT>::remove( NodeT& node)
+		typename Graph<NodeT, EdgeT>&
+		Graph<NodeT, EdgeT> ::Node::graph()
 		{
-			for (Graph<NodeT, EdgeT>::Node::pred_iterator iter = node.preds_begin(); iter != node.preds_end(); ++iter)
-			{
-				delete iter;
-			}
-			for (Graph<NodeT, EdgeT>::Node::succ_iterator iter = node.succs_begin(); iter != node.succs_end(); ++iter)
-			{
-				delete iter;
-			}
-			delete node;
+			return ref_to_graph;
 		}
-	template < class NodeT, class EdgeT>
-		Graph<NodeT, EdgeT>::~Graph()
-		{
-			for (set<NodeT>::iterator iter = AllNodes.begin(); iter != AllNodes.end(); ++iter)
-			{
-				delete &(*iter);
-			}
-		}
-	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>::Node::succ_iterator
-		Graph<NodeT, EdgeT>::Node::succs_begin()
-		{
-			succ_iterator tmpIter;
-			tmpIter.link_to_succs_set = successors.begin();
-			return tmpIter;
-		}
-	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>::Node::succ_iterator
-		Graph<NodeT, EdgeT>::Node::succs_end()
-		{
-				succ_iterator tmpIter;
-				tmpIter.link_to_succs_set = successors.end();
-				return tmpIter;
-		}
+	template <class NodeT, class EdgeT> Graph<NodeT, EdgeT>::Graph() : 
+		ref_to_graph(*this),
+		counter(0),
+		nodes_amount(0),
+		edges_amount(0)	{}
+
 	template < class NodeT, class EdgeT>
 		typename Graph<NodeT, EdgeT>::Node::pred_iterator
 		Graph<NodeT, EdgeT>::Node::preds_begin()
 		{
-				pred_iterator tmpIter;
-				tmpIter.link_to_preds_set = predecessors.begin();
-				return tmpIter;
+			pred_iterator pred_iter_tmp;
+			pred_iter_tmp.iter = list_of_refs_to_preds.begin();
+			return pred_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
 		typename Graph<NodeT, EdgeT>::Node::pred_iterator
 		Graph<NodeT, EdgeT>::Node::preds_end()
 		{
-				pred_iterator tmpIter;
-				tmpIter.link_to_preds_set = predecessors.end();
-				return tmpIter;
+			pred_iterator pred_iter_tmp;
+			pred_iter_tmp.iter = list_of_refs_to_preds.end();
+			return pred_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>& 
-		Graph<NodeT, EdgeT>::Node::graph()
+		typename Graph<NodeT, EdgeT>::Node::succ_iterator
+		Graph<NodeT, EdgeT>::Node::succs_begin()
 		{
-			return link_to_graph;
+			succ_iterator succ_iter_tmp;
+			succ_iter_tmp.iter = list_of_refs_to_succs.begin();
+			return succ_iter_tmp;
 		}
 	template < class NodeT, class EdgeT>
-		UInt32 Graph<NodeT, EdgeT>::Node::uid() const
+		typename Graph<NodeT, EdgeT>::Node::succ_iterator
+		Graph<NodeT, EdgeT>::Node::succs_end()
 		{
-			return id;
+			succ_iterator succ_iter_tmp;
+			succ_iter_tmp.iter = list_of_refs_to_succs.end();
+			return succ_iter_tmp;
 		}
-	template < class NodeT, class EdgeT>
+	template <class NodeT, class EdgeT>
+		Graph<NodeT, EdgeT>::~Graph()
+		{
+			typedef typename list<reference_wrapper<NodeT>>::iterator IterTmpN;
+			typedef typename list<reference_wrapper<EdgeT>>::iterator IterTmpE;
+			IterTmpN iter = list_of_nodes.begin();
+			while (iter != list_of_nodes.end())
+			{
+				IterTmpN iter_tmp = iter;
+				iter_tmp++;
+				remove((*iter).get());
+				iter = iter_tmp;
+			};
+			IterTmpE iter1 = list_of_edges.begin();
+			while (iter1 != list_of_edges.end())
+			{
+				IterTmpE iter_tmp = iter1;
+				iter_tmp++;
+				remove((*iter1).get());
+				iter1 = iter_tmp;
+			};
+		}
+	template <class NodeT, class EdgeT>
+		void Graph<NodeT, EdgeT>::remove(NodeT& node)
+		{
+			typedef typename list<reference_wrapper<EdgeT>>::iterator IterTmp;
+			IterTmp iter = node.list_of_refs_to_preds_edges.begin();
+			do
+			{
+				IterTmp iter_tmp = iter;
+				if (iter != node.list_of_refs_to_preds_edges.end())
+				{
+					iter_tmp++;
+					remove((*iter).get());
+					iter = iter_tmp;
+				}
+				else
+					break;
+			} while (iter != node.list_of_refs_to_preds_edges.end());
+			iter = node.list_of_refs_to_succs_edges.begin();
+			do
+			{
+				IterTmp iter_tmp = iter;
+				if (iter != node.list_of_refs_to_succs_edges.end())
+				{
+					iter_tmp++;
+					remove((*iter).get());
+					iter = iter_tmp;
+				}
+				else
+					break;
+			} while (iter != node.list_of_refs_to_succs_edges.end());
+			list_of_nodes.erase(node.iter_of_itself_in_general_list);
+			node.ref_to_graph.nodes_amount--;
+			delete &node;
+		}
+	template <class NodeT, class EdgeT>
+		EdgeT& Graph<NodeT, EdgeT>::Node::first_pred()
+		{
+			if (num_preds() < 1)
+				throw Error("Amount of preds edges < 1, can't return \"first_pred()\"");
+			else
+				return (*(list_of_refs_to_preds_edges.begin())).get();
+
+		}
+	template <class NodeT, class EdgeT>
+		EdgeT& Graph<NodeT, EdgeT>::Node::first_succ()
+		{
+			if (num_succs() < 1)
+				throw Error("Amount of succs edges < 1, can't return \"first_succ()\"");
+			else
+				return (*(list_of_refs_to_succs_edges.begin())).get();
+		}
+	template <class NodeT, class EdgeT>
 		UInt32 Graph<NodeT, EdgeT>::Node::num_preds() const
 		{
-			return pred_counter;
+			return list_of_refs_to_preds.size();
 		}
-	template < class NodeT, class EdgeT>
+	template <class NodeT, class EdgeT>
 		UInt32 Graph<NodeT, EdgeT>::Node::num_succs() const
 		{
-			return succ_counter;
+			return list_of_refs_to_succs.size();
 		}
+	template <class NodeT, class EdgeT>
+		Graph<NodeT, EdgeT>::Node::~Node()	{}
 
-	template < class NodeT, class EdgeT>
+	template <class NodeT, class EdgeT>
+		Graph<NodeT, EdgeT>::Edge::~Edge()	{}
+
+	template <class NodeT, class EdgeT>
 		NodeT& Graph<NodeT, EdgeT>::Edge::pred()
 		{
-			return static_cast<NodeT>(*predecessor);
+			return ref_to_pred;
 		}
-	template < class NodeT, class EdgeT>
+	template <class NodeT, class EdgeT>
 		NodeT& Graph<NodeT, EdgeT>::Edge::succ()
 		{
-			return static_cast<NodeT>(*successor);
+			return ref_to_succ;
 		}
-	template < class NodeT, class EdgeT>
-		typename Graph<NodeT, EdgeT>&
-		Graph<NodeT, EdgeT>::Edge::graph()
+	template <class NodeT, class EdgeT>
+		typename Graph<NodeT, EdgeT>::UId
+		Graph<NodeT, EdgeT>::Edge::uid() const
 		{
-				return link_to_graph;
+			return uniq_num;
 		}
-	template < class NodeT, class EdgeT>
-		UInt32 Graph<NodeT, EdgeT>::Edge::uid() const
+	template <class NodeT, class EdgeT>
+		Graph<NodeT, EdgeT>::Edge::Edge(NodeT& p, NodeT& s) :
+		ref_to_pred(p),
+		ref_to_succ(s),
+		ref_to_graph(p.ref_to_graph),
+		uniq_num(p.ref_to_graph.counter)
 		{
-			return id;
+			ref_to_graph.edges_amount++;
+			ref_to_graph.counter++;
 		}
-
-	template < class NodeT, class EdgeT>///////////////////////////////////////
-	Graph<NodeT, EdgeT>::Edge::Edge(NodeT& p, NodeT& s) : 
-		predecessor(p.link_in_all_nodes),
-		successor(s.link_in_all_nodes),
-		link_to_graph(p.link_to_graph),
-		id(p.link_to_graph.counter_for_id),
-		link_in_all_edges()
+	template <class NodeT, class EdgeT>
+		void Graph<NodeT, EdgeT>::remove(EdgeT& edge)
 		{
+			edge.ref_to_pred.list_of_refs_to_succs.erase(edge.iter_of_ref_to_succ_in_pred);
+			edge.ref_to_pred.list_of_refs_to_succs_edges.erase(edge.iter_of_ref_to_edge_in_pred);
 
-//			link_to_graph = static_cast<Graph&>(p.link_to_graph);			
-//			id = p.link_to_graph.countr_for_id;
-			p.link_to_graph.counter_for_id++;
-			edge_iterator tmpIter = AllEdges.insert(tmpEdge);
-			tmpIter->link_in_all_edges = tmpIter;
-			p.link_to_graph.edge_counter++;
-			tmpIter->predecessor.successors.insert(s.link_in_all_nodes);
-			tmpIter->successor.predecessors.insert(p.link_in_all_nodes);
-			tmpIter->predecessor.succ_counter++;
-			tmpIter->successor.pred_counter++;
+			edge.ref_to_succ.list_of_refs_to_preds.erase(edge.iter_of_ref_to_pred_in_succ);
+			edge.ref_to_succ.list_of_refs_to_preds_edges.erase(edge.iter_of_ref_to_edge_in_succ);
+
+			list_of_edges.erase(edge.iter_of_itself_in_general_list);
+			edge.ref_to_graph.edges_amount--;
+			delete &edge;
 		}
-
+	template <class NodeT, class EdgeT> 
+		template <class TypeContent, class TypeContainer>
+		typename TypeContent&
+		Graph<NodeT, EdgeT>::general_iterator<TypeContent, TypeContainer>::operator*()
+		{
+			return (*iter).get();
+		}
+	template <class NodeT, class EdgeT>
+		template <class TypeContent, class TypeContainer>
+		bool Graph<NodeT, EdgeT>::general_iterator<TypeContent, TypeContainer>::operator==(const general_iterator& b)
+		{
+			return this->iter == b.iter;
+		}
+	template <class NodeT, class EdgeT>
+		template <class TypeContent, class TypeContainer>
+		bool Graph<NodeT, EdgeT>::general_iterator<TypeContent, TypeContainer>::operator!=(const general_iterator& b)
+		{
+			return this->iter != b.iter;
+		}
+	template <class NodeT, class EdgeT>
+		template <class TypeContent, class TypeContainer>
+		typename Graph<NodeT, EdgeT>::general_iterator<TypeContent, TypeContainer>&
+		Graph<NodeT, EdgeT>::general_iterator<TypeContent, TypeContainer>::operator++()
+		{
+			++iter;
+			return *this;
+		}
 }; // namespace Task

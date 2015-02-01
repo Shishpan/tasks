@@ -28,32 +28,43 @@ namespace Task
     // @param NodeT class representing nodes of graph, should be inherited from Graph::Node
     // @param EdgeT class representing edges of graph, should be inherited from Graph::Edge
     //
+
     template < class NodeT, class EdgeT> class Graph
     {
     public:
         typedef UInt32 UId; //< Unique id type for node and edge
-
-		typedef typename std::set<NodeT>::iterator node_iterator;
-		typedef typename std::set<EdgeT>::iterator edge_iterator;
-
         static const UId INVALID_UID = (UId) (-1);
+		class Edge;
+		class Node;
 
-        class Error: public std::exception
-        {
+		template <class TypeContent, class TypeContainer> class general_iterator : public TypeContainer
+		{
+			friend Graph < NodeT, EdgeT >;
+			friend Node;
+			friend Edge;
+			TypeContainer iter;
+		public:
+			TypeContent& operator*();
+			bool operator== (const general_iterator& b);
+			bool operator!= (const general_iterator& b);
+			general_iterator& operator++();
+		};
+
+		class Error : public std::exception
+		{
 		public:
 			Error(const char* error_text)
 			{
-				text(error_text);
+				text = string(error_text);
 			}
-			const char* what()
+			const char* issue()
 			{
 				return text.c_str();
 			}
 		private:
 			std::string text;
-        };
-
-
+		};
+		
         //
         // Graph node representation
         //
@@ -61,64 +72,11 @@ namespace Task
         {
         public:
             //---- Iterator types ----
-			class pred_iterator // iterator for node's predecessor edges 
-			{
-			public:
-				typedef typename std::set<typename Graph<NodeT, EdgeT>::edge_iterator>::iterator tmpTypeForIterPreds;
-				tmpTypeForIterPreds link_to_preds_set;
-				pred_iterator& pred_iterator::operator++()
-				{
-					link_to_preds_set++;
-					return *this;
-				}					
-				edge_iterator& pred_iterator::operator* ()
-				{
-					return *(*link_to_preds_set);
-				}
-				bool operator==(pred_iterator& right)
-				{
-					if (this->link_to_preds_set == right.link_to_preds_set)
-						return true;
-					else
-						return false;
-				}		
-				bool operator!=(pred_iterator& right)
-				{
-					if (*this == right)
-						return false;
-					else
-						return true;
-				}				
-			};
-			class succ_iterator // iterator for node's successor edges 
-			{
-			public:
-				typedef typename std::set<typename Graph::edge_iterator>::iterator tmpTypeForIterSuccs;
-				tmpTypeForIterSuccs link_to_succs_set;
-				succ_iterator& operator++()
-				{
-					link_to_succs_set++;
-					return *this;
-				}
-				edge_iterator& operator* ()
-				{
-					return *(*link_to_succs_set);
-				}
-				bool operator==(succ_iterator& right)
-				{
-					if (this->link_to_succs_set == right.link_to_succs_set)
-						return true;
-					else
-						return false;
-				}
-				bool operator!=(succ_iterator& right)
-				{
-					if (*this == right)
-						return false;
-					else
-						return true;
-				}		
-			};
+			typedef general_iterator<NodeT, typename list<reference_wrapper<NodeT>>::iterator> pred_iterator; // iterator for node's predecessor edges
+			typedef general_iterator<NodeT, typename list<reference_wrapper<NodeT>>::iterator> succ_iterator; // iterator for node's successor edges 
+
+			friend Graph<NodeT, EdgeT>;
+			friend Edge;
 
             pred_iterator preds_begin(); // Get iterator to the first predecessor edge
             pred_iterator preds_end();   // Get end iterator for the predecessors
@@ -142,16 +100,17 @@ namespace Task
             // ---- Default  and copy constructors turned off ---
             Node();
             Node(const Node &n);
-			
+		
             // ---- The internal implementation routines ----
-			friend Graph<NodeT, EdgeT>::Edge;
-			UId id;
-			typename Graph::node_iterator link_in_all_nodes;
-			std::set<typename Graph::edge_iterator> predecessors;
-			std::set<typename Graph::edge_iterator> successors;
-			Graph& link_to_graph;
-			UInt32 pred_counter;
-			UInt32 succ_counter;
+			UId uniq_num;
+			Graph& ref_to_graph;
+			list<reference_wrapper<NodeT>> list_of_refs_to_preds;
+			list<reference_wrapper<NodeT>> list_of_refs_to_succs;
+
+			list<reference_wrapper<EdgeT>> list_of_refs_to_preds_edges;
+			list<reference_wrapper<EdgeT>> list_of_refs_to_succs_edges;
+			typename list<reference_wrapper<NodeT>>::iterator iter_of_itself_in_general_list;
+
             // ---- The data involved in the implementation ----
         };
 
@@ -161,6 +120,8 @@ namespace Task
         class Edge
         {
         public:
+			friend Graph < NodeT, EdgeT >;
+
             NodeT &pred(); // Get edge predecessor
             NodeT &succ(); // Get edge successor
 
@@ -174,22 +135,27 @@ namespace Task
             Edge();
             Edge( const Edge &e);
         // ---- The internal implementation routines ----
-			UId id;
-			typename Graph::edge_iterator link_in_all_edges;
-			typename Graph::node_iterator predecessor;
-			typename Graph::node_iterator successor;
+			NodeT& ref_to_pred;
+			NodeT& ref_to_succ;
+			typename list<reference_wrapper<NodeT>>::iterator iter_of_ref_to_succ_in_pred;
+			typename list<reference_wrapper<NodeT>>::iterator iter_of_ref_to_pred_in_succ;
 
-			Graph& link_to_graph;
-
+			typename list<reference_wrapper<EdgeT>>::iterator iter_of_ref_to_edge_in_pred;
+			typename list<reference_wrapper<EdgeT>>::iterator iter_of_ref_to_edge_in_succ;
+			typename list<reference_wrapper<EdgeT>>::iterator iter_of_itself_in_general_list;
+			Graph& ref_to_graph;
+			UId uniq_num;
         // ---- The data involved in the implementation ----
     };
 
     public:
     // ---- Graph interface ----
-		
-//        class node_iterator; // Iterator for the graph's nodes
-//        class edge_iterator; // Iterator for the graph's edges
-               
+		typedef general_iterator<NodeT, typename list<reference_wrapper<NodeT>>::iterator> node_iterator; // Iterator for the graph's nodes
+		typedef general_iterator<EdgeT, typename list<reference_wrapper<EdgeT>>::iterator> edge_iterator; // Iterator for the graph's edges
+
+		friend Node;
+		friend Edge;
+
         node_iterator nodes_begin(); // Get the iterator to the first node
         node_iterator nodes_end();   // Get the end iterator for the nodes
 
@@ -205,14 +171,16 @@ namespace Task
         void remove( NodeT& node); // Remove and delete node
         void remove( EdgeT& edge); // Remove and delete edge
 
+		Graph();
         virtual ~Graph(); // Destructor, deletes all nodes and edges
     private:
         // ---- The internal implementation routines ----
-		std::set<NodeT> AllNodes;
-		std::set<EdgeT> AllEdges;
-		UInt32 node_counter;
-		UInt32 edge_counter;
-		UInt32 counter_for_id;
+		UId counter;
+		list<reference_wrapper<NodeT>> list_of_nodes;
+		list<reference_wrapper<EdgeT>> list_of_edges;
+		UInt32 nodes_amount;
+		UInt32 edges_amount;
+		Graph& ref_to_graph;
         // ---- The data involved in the implementation ----
     };
 
